@@ -1,38 +1,38 @@
+image: openjdk:17-jdk
+
 stages:
-  - build
   - test
-  - docker
   - deploy
 
-variables:
-  DOCKER_DRIVER: overlay2
+before_script:
+  - PATH=/opt/apache-maven-3.8.6/bin:/usr/local/openjdk-17/bin:$PATH
+  - JAVA_HOME=\Program Files\Java\jdk-17
 
-build:
-  stage: build
-  script:
-    - ./mvnw clean package -DskipTests
-  artifacts:
-    paths:
-      - target/*.jar
-
-test:
+test-all:
   stage: test
+  tags: [maven]
+  except:
+    - master
+    - main
   script:
-    - ./mvnw test
+    - mvn clean install
 
-docker-build:
-  stage: docker
-  image: docker:latest
-  services:
-    - docker:dind
-  before_script:
-    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+test-unit:
+  stage: test
+  tags: [maven]
+  only:
+    - master
+    - main
   script:
-    - docker build -t $CI_REGISTRY_IMAGE/service-a ./service-a
-    - docker push $CI_REGISTRY_IMAGE/service-a
+    - mvn clean package
+  artifacts:
+    name: backend-social-network
+    expire_in: 1 week
+
 
 deploy:
   stage: deploy
-  script:
-    - echo "Déploiement via Docker Compose ou Kubernetes"
-    # - ssh user@server 'docker pull ... && docker-compose up -d'
+  needs: [test-unit]
+  only:
+    - master
+    - main
