@@ -1,0 +1,38 @@
+stages:
+  - build
+  - test
+  - docker
+  - deploy
+
+variables:
+  DOCKER_DRIVER: overlay2
+
+build:
+  stage: build
+  script:
+    - ./mvnw clean package -DskipTests
+  artifacts:
+    paths:
+      - target/*.jar
+
+test:
+  stage: test
+  script:
+    - ./mvnw test
+
+docker-build:
+  stage: docker
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE/service-a ./service-a
+    - docker push $CI_REGISTRY_IMAGE/service-a
+
+deploy:
+  stage: deploy
+  script:
+    - echo "Déploiement via Docker Compose ou Kubernetes"
+    # - ssh user@server 'docker pull ... && docker-compose up -d'

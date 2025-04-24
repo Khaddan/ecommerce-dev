@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  zipkin:
+    image: openzipkin/zipkin:latest
+    container_name: zipkin
+    ports:
+      - "9411:9411"
+    networks:
+      - adaptive-net
+    environment:
+      - STORAGE_TYPE=mem  # Stockage en mémoire (par défaut)
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9411/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  adaptive-net:
+    external: true
+
+#version: '3.8'
+#
+#services:
+#  postgres-db:
+#    image: postgres:15-alpine
+#    container_name: postgres-adaptive
+#    environment:
+#      POSTGRES_USER: adaptive
+#      POSTGRES_PASSWORD: adaptive
+#      POSTGRES_DB: zipkin  # Base dédiée pour Zipkin
+#    ports:
+#      - "5432:5432"
+#    volumes:
+#      - postgres_data:/var/lib/postgresql/data
+#      - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql
+#    networks:
+#      - adaptive-net
+#    healthcheck:
+#      test: ["CMD-SHELL", "pg_isready -U adaptive -d zipkin"]
+#      interval: 5s
+#      timeout: 5s
+#      retries: 10
+#
+#  zipkin:
+#    image: openzipkin/zipkin:latest
+#    container_name: zipkin
+#    ports:
+#      - "9411:9411"
+#    environment:
+#      STORAGE_TYPE: postgresql
+#      POSTGRES_HOST: postgres-db
+#      POSTGRES_USER: adaptive
+#      POSTGRES_PASSWORD: adaptive
+#      POSTGRES_DB: zipkin
+#      POSTGRES_SSL: "false"
+#    depends_on:
+#      postgres-db:
+#        condition: service_healthy
+#    networks:
+#      - adaptive-net
+#    healthcheck:
+#      test: ["CMD", "curl", "-f", "http://localhost:9411/health"]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 5
+#
+#volumes:
+#  postgres_data:
+#
+#networks:
+#  adaptive-net:
+#    external: true
+#    name: adaptive-net
